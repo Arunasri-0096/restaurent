@@ -1,0 +1,25 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Arunasri-0096/restaurent.git'
+            }
+        }
+
+        stage('package') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Artifact') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.war'
+            }
+        }
+
+    }
+}
