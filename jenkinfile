@@ -1,18 +1,48 @@
-# Stage 1: Build Stage
-FROM maven:3.9.6-eclipse-temurin-17 AS builder
+pipeline {
+    agent any
 
-WORKDIR /app
+    environment {
+        IMAGE_NAME = "restaurant"
+        DOCKERHUB_USER = "yourdockerhubusername"
+    }
 
-COPY . /app
+    stages {
 
-RUN mvn clean package -DskipTests
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/yourusername/restaurant-project.git'
+            }
+        }
 
+        stage('Build Maven Package') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
 
-# Stage 2: Runtime Stage
-FROM tomcat:10.1-jdk17
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME .'
+            }
+        }
 
-COPY --from=builder /app/target/restaurant.war /usr/local/tomcat/webapps/ROOT.war
+        stage('Tag Image') {
+            steps {
+                sh 'docker tag $IMAGE_NAME $DOCKERHUB_USER/$IMAGE_NAME:latest'
+            }
+        }
 
-EXPOSE 8080
+        stage('Push DockerHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub',
+                usernameVariable: 'USER',
+                passwordVariable: 'PASS')]) {
 
-CMD ["catalina.sh", "run"]
+                    sh 'echo $PASS | docker login -u $USER --password-stdin'
+                    sh 'docker push $DOCKERHUB_USER/$IMAGE_NAME:latest'
+                }
+            }
+        }
+
+    }
+}
