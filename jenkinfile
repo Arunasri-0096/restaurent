@@ -1,25 +1,18 @@
-pipeline {
-    agent any
+# Stage 1: Build Stage
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
 
-    stages {
+WORKDIR /app
 
-        stage('Git Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/Arunasri-0096/restaurent.git'
-            }
-        }
+COPY . /app
 
-        stage('package') {
-            steps {
-                sh 'mvn clean package'
-            }
-        }
+RUN mvn clean package -DskipTests
 
-        stage('Artifact') {
-            steps {
-                archiveArtifacts artifacts: 'target/*.war'
-            }
-        }
 
-    }
-}
+# Stage 2: Runtime Stage
+FROM tomcat:10.1-jdk17
+
+COPY --from=builder /app/target/restaurant.war /usr/local/tomcat/webapps/ROOT.war
+
+EXPOSE 8080
+
+CMD ["catalina.sh", "run"]
