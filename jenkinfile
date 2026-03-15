@@ -11,7 +11,7 @@ stages {
 
     stage('Git Checkout') {
         steps {
-            git branch: 'main', url: 'https://github.com/yourusername/restaurant-project.git'
+            git branch: 'main', url: 'https://github.com/Arunasri-0096/restaurent.git'
         }
     }
 
